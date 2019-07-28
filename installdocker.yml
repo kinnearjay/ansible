@@ -1,0 +1,44 @@
+# Ansible playbook AWS - install docker
+---
+- name: "install docker for aws ami"
+  hosts: aws-docker-vms
+  become: yes
+  tasks:
+    - name: Update yum packages
+      yum:
+        name: '*'
+        state: latest
+        update_only: yes
+
+    - name: install packages for docker
+      yum:
+        name: "{{ packages }}"
+        state: latest
+        update_cache: yes
+      vars:
+        packages:
+        - yum-utils
+        - device-mapper-persistent-data
+        - lvm2
+        - amazon-linux-extras
+
+    - name: Add additional repos
+      shell: yum-config-manager --enable extras
+
+    - name: install docker for amazon linux
+      shell: "amazon-linux-extras install docker=18.06.1 -y"
+
+    - name: make sure docker runs on startup
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Ensure packages are installed
+      pip:
+        name: "{{ packages }}"
+      vars:
+        packages:
+        - boto
+        - boto3
+        - docker-compose
